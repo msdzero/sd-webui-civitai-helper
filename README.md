@@ -14,7 +14,7 @@ If a more interested part decides to pick up development, I will happily cede co
 # Civitai Helper
 Stable Diffusion Webui Extension for Civitai, to handle your models much more easily.
 
-Civitai: ![Civitai Url](https://civitai.com/models/16768/civitai-helper-sd-webui-civitai-extension)
+Original Civitai Page by butaixianran: [Civitai Url](https://civitai.com/models/16768/civitai-helper-sd-webui-civitai-extension)
 
 # Features
 * Scans all models to download model information and preview images from Civitai.
@@ -61,7 +61,7 @@ For each model, it will create two files to save all model info from Civitai. Th
 If a model info file already exists, by default it will be skipped. If a model cannot be found in Civitai, a minimal model info file will be created with any information that can be extracted from the model. By default, a model with model pre-existing model info files will not be scanned.
 
 ### Adding New Models
-When you want to grab some new models, you can either download them to the appropriate directory yourself or you can use the built-in model [downloader](https://github.com/zixaphir/Stable-Diffusion-Webui-Civitai-Helper#download). If you use the Model Downloader, the model information and preview will also be downloaded, along providing the option to download other files, like the model config or VAE.
+When you want to grab some new models, you can either download them to the appropriate directory yourself or you can use the built-in model [downloader](#download). If you use the Model Downloader, the model information and preview will also be downloaded, along providing the option to download other files, like the model config or VAE.
 
 If you just want to download the models into the appropriate directories yourself, you can simply run a scan again to get new model's information and preview images, although other files like the model config or VAE may be missing. Only new models will be scanned with default options.
 
@@ -256,4 +256,4 @@ Since v1.5.5, we've already optimized the SHA256 function to the top. So the onl
 * try again
 * or use a pro account of colab.
 
-### [Changes](https://github.com/zixaphir/Stable-Diffusion-Webui-Civitai-Helper/blob/master/CHANGELOG.md)
+### [Changes](CHANGELOG.md)
