@@ -409,6 +409,29 @@ def get_image_url(img_dict, max_size_preview):
     return url
 
 
+def get_preferred_preview_images(images:list, nsfw_preview_threshold:str) -> list:
+    """
+    Return image previews capped at the configured NSFW threshold.
+    Ordering behavior is controlled by settings.
+    """
+    max_allowed_rating = NSFW_LEVELS.get(nsfw_preview_threshold, NSFW_LEVELS["PG"])
+    selection_behavior = util.get_opts("ch_preview_nsfw_selection_behavior") or "API Order (default)"
+
+    preferred_images = []
+    for img in images:
+        if img.get("type") != "image":
+            continue
+
+        image_rating = img.get("nsfwLevel", 32)
+        if image_rating <= max_allowed_rating:
+            preferred_images.append(img)
+
+    if selection_behavior == "Lowest Rating First":
+        preferred_images.sort(key=lambda img: img.get("nsfwLevel", 32))
+
+    return preferred_images
+
+
 def verify_preview(path, img_dict, max_size_preview, nsfw_preview_threshold):
     """
     Downloads a preview image if it meets the user's requirements.
@@ -488,9 +511,18 @@ def get_preview_image_by_model_path(model_path: str, max_size_preview, nsfw_prev
     except (KeyError, TypeError):
         return
 
+    preferred_images = get_preferred_preview_images(images, nsfw_preview_threshold)
+
+    if len(preferred_images) == 0:
+        util.printD(
+            f"No preview images available within NSFW threshold {nsfw_preview_threshold} for model: {model_path}"
+        )
+        yield
+        return
+
     if preferred_preview:
         img_url = preferred_preview
-        for img_dict in images:
+        for img_dict in preferred_images:
             if img_dict["url"] == preferred_preview:
                 img_url = get_image_url(img_dict, max_size_preview)
                 break
@@ -510,7 +542,7 @@ def get_preview_image_by_model_path(model_path: str, max_size_preview, nsfw_prev
 
             break
 
-    for img_dict in images:
+    for img_dict in preferred_images:
         for result in verify_preview(
                 preview_path, img_dict, max_size_preview, nsfw_preview_threshold
         ):

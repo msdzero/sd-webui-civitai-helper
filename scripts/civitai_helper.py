@@ -312,6 +312,19 @@ def on_ui_settings():
         )
     )
     shared.opts.add_option(
+        "ch_preview_nsfw_selection_behavior",
+        shared.OptionInfo(
+            "API Order (default)",
+            "Preview selection order within NSFW threshold.",
+            gr.Dropdown,
+            {
+                "choices": ["API Order (default)", "Lowest Rating First"],
+                "interactive": True
+            },
+            section=section
+        )
+    )
+    shared.opts.add_option(
         "ch_dl_webui_metadata",
         shared.OptionInfo(
             True,
