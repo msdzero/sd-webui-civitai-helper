@@ -1,11 +1,5 @@
-### I would like to retire from maintaining this project. As much as I've enjoyed working on this, I have lost interest as of late and no longer use Stable Diffusion WebUI. If anyone would like to take over, please feel free to fork this project.
-
-**[Contributors](https://github.com/zixaphir/Stable-Diffusion-Webui-Civitai-Helper/graphs/contributors)**
-
-### Language
-[中文(ChatGPT)](README.cn.md)
-[日本語(ChatGPT)](README.jp.md)
-[한국어(ChatGPT)](README.kr.md)
+> [!NOTE]
+> This is a personal fork, intended to work with [Forge Neo](https://github.com/Haoming02/sd-webui-forge-classic/tree/neo). It hasn't tested with any other version of webui.
 
 ## About Civitai Helper
 This extension provides the ability to download models and model metadata from Civitai. Data such as activation keywords, model description, version information, and model previews for models hosted on Civitai can be at your fingertips without having to navigate away from stable diffusion webui.
@@ -47,22 +41,9 @@ Alternatively, download this project as a zip file, and unzip it to `Your SD web
 
 Everytime you install or update this extension, you need to shutdown SD Webui and Relaunch it. Just "Reload UI" won't work for this extension.
 
-Some functionality from Civitai, like downloading models, requires having an account and adding your API key. See this ![Wiki Article](https://github.com/zixaphir/Stable-Diffusion-Webui-Civitai-Helper/wiki/Civitai-API-Key) for more information.
+Some functionality from Civitai, like downloading models, requires having an account and adding your API key. See this [Wiki Article](https://github.com/zixaphir/Stable-Diffusion-Webui-Civitai-Helper/wiki/Civitai-API-Key) for more information.
 
 Done.
-
-## Branches
-Development of this extension happens in three development branches:
-* **`master`**: The current version of the extension intended for end users. Out-of-version changes to this branch only exist to hotfix critical issues found after the release of a new version.
-* **`dev`**: The active development version of this extension. This will always have the most up-to-date changes but is also the most likely to contain bugs.
-* **`v1.6ONLY`**: Not supported and not really intended for anybody except for me. Slowest to update and less tested than other branches, this branch only runs on the latest version of webui. Compatibility code for older versions is actively removed, and whether I'm running it on webui stable or webui dev is in flux. In theory, this is the most optimized version of the extension, but it's often just me chasing waterfalls. Do not submit issues if you use this branch. They will be marked as invalid, closed, and otherwise ignored.
-* **`Feature Branches`**: These are branches separated from the main development branches to add new features. They are likely to be in a state of active development and incomplete.
-
-## Update Your SD Webui
-This extension need to get extra network's cards id. Which is added since **2023-02-06**.
-**If your SD webui is an earlier version, you need to update it!**
-
-### Some of the following information may not up-to-date. Most functionality should be the same or similar, but many changes post-v1.6 have not been documented as of yet. Images may not match 1:1 with the current state of the extension.
 
 ## Scanning Models
 Go to extension tab "Civitai Helper". There is a button called "Scan model".
