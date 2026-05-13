@@ -10,11 +10,13 @@ from typing import cast, Literal
 from tqdm import tqdm
 import requests
 import urllib3
+from PIL import Image, ImageOps
 from . import util
 
 
 DL_EXT = ".downloading"
 MAX_RETRIES = 30
+PREVIEW_MAX_SIZE = (512, 768)
 
 # disable ssl warning info
 urllib3.disable_warnings()
@@ -119,13 +121,50 @@ def visualize_progress(percent:int, downloaded:int, total:int, speed:int | float
 
     return f"`[{progress:<100}] {snippet}`".replace(" ", "\u00a0")
 
+def convert_image_to_jpg_and_resize(
+    file_path:str,
+    max_size:tuple[int, int]=PREVIEW_MAX_SIZE
+) -> str:
+    """
+    Converts an image to JPG and resizes it to fit inside max_size while
+    preserving the original aspect ratio.
+
+    returns: path to the converted JPG file
+    """
+
+    base, _ = os.path.splitext(file_path)
+    jpg_path = f"{base}.jpg"
+
+    with Image.open(file_path) as image:
+        image = ImageOps.exif_transpose(image)
+
+        # Keep aspect ratio and fit image inside target box without cropping.
+        resampling = getattr(Image, "Resampling", Image)
+        image.thumbnail(max_size, resampling.LANCZOS)
+
+        if image.mode in ("RGBA", "LA") or (
+            image.mode == "P" and "transparency" in image.info
+        ):
+            rgba_image = image.convert("RGBA")
+            rgb_image = Image.new("RGB", rgba_image.size, (255, 255, 255))
+            rgb_image.paste(rgba_image, mask=rgba_image.split()[-1])
+        else:
+            rgb_image = image.convert("RGB")
+
+        rgb_image.save(jpg_path, format="JPEG", quality=60, optimize=True)
+
+    if os.path.abspath(file_path) != os.path.abspath(jpg_path) and os.path.exists(file_path):
+        os.remove(file_path)
+
+    return jpg_path
 
 def download_progress(
     url:str,
     file_path:str,
     total_size:int,
     headers:dict | None=None,
-    response_without_range:requests.Response | None=None
+    response_without_range:requests.Response | None=None,
+    convert_to_jpg_resize:bool=False
 ) -> Generator[tuple[bool, str] | str, None, None]:
     """
     Performs a file download.
@@ -178,7 +217,7 @@ def download_progress(
 
             os.remove(dl_path)
 
-            yield from download_progress(url, file_path, total_size, headers)
+            yield from download_progress(url, file_path, total_size, headers, convert_to_jpg_resize=convert_to_jpg_resize)
             return
 
         if not success:
@@ -248,6 +287,14 @@ def download_progress(
 
     # rename file
     os.rename(dl_path, file_path)
+
+    if convert_to_jpg_resize:
+        try:
+            file_path = convert_image_to_jpg_and_resize(file_path)
+        except Exception as conversion_error:
+            util.warning(f"Failed to convert downloaded image to JPG: {conversion_error}")
+            util.printD(f"Failed to convert downloaded image to JPG: {conversion_error}")
+
     output = f"File Downloaded to: {file_path}"
     util.printD(output)
 
@@ -288,7 +335,8 @@ def dl_file(
     filename:str | None=None,
     file_path:str | None=None,
     headers:dict | None=None,
-    duplicate:str | None=None
+    duplicate:str | None=None,
+    convert_to_jpg_resize:bool=False
 ) -> Generator[tuple[bool, str] | str, None, None]:
     """
     Perform a download.
@@ -369,7 +417,7 @@ def dl_file(
 
         util.printD(f"File size: {total_size} ({human_readable_filesize(total_size)})")
 
-        yield from download_progress(url, file_path, total_size, headers, response)
+        yield from download_progress(url, file_path, total_size, headers, response, convert_to_jpg_resize=convert_to_jpg_resize)
 
 
 def human_readable_filesize(size:int | float) -> str:

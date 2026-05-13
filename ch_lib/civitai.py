@@ -434,7 +434,7 @@ def verify_preview(path, img_dict, max_size_preview, nsfw_preview_threshold):
 
     success = False
     preview_path = ""
-    for result in downloader.dl_file(img_url, file_path=path):
+    for result in downloader.dl_file(img_url, file_path=path, convert_to_jpg_resize=True):
         if not isinstance(result, str):
             success, preview_path = result
             break
@@ -495,7 +495,7 @@ def get_preview_image_by_model_path(model_path: str, max_size_preview, nsfw_prev
                 img_url = get_image_url(img_dict, max_size_preview)
                 break
 
-        for result in downloader.dl_file(img_url, file_path=preview_path):
+        for result in downloader.dl_file(img_url, file_path=preview_path, convert_to_jpg_resize=True):
             if isinstance(result, str):
                 yield result
                 continue
