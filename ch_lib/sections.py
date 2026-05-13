@@ -916,7 +916,7 @@ def download_multiple_section():
             * `AllFiles`: Downloads all model files, including unsupported files, from a model.
             * `AllVersions`: Downloads every version of a model.
             * `Subfolder`: Downloads the model files to a specified subdirectory of the model type folder. A lora with `Subfolder=style` will download to `models/Lora/style`. This option will fail if the subfolder does not already exist.
-            e.g., `https://civitai.com/models/XXXXXX::AllFiles::AllModels` would download every file from every version of a model with ID `XXXXXX`.
+            e.g., `https://civitai.red/models/XXXXXX::AllFiles::AllModels` would download every file from every version of a model with ID `XXXXXX`.
             Parameters are not case-senstive.
         """)
     with gr.Accordion("Add to Batch Form"):
