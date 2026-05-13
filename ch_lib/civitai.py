@@ -769,8 +769,9 @@ def move_model_to_subfolder(filepath, model_info):
     # iterate through tags until we find one that matches MODEL_CATEGORIES
 
     for tag in tags:
-        if tag in MODEL_CATEGORIES:
-            model_category = tag
+        cleaned_tag = re.sub(r'[^a-z]', '', tag.lower()).strip()
+        if cleaned_tag in MODEL_CATEGORIES:
+            model_category = cleaned_tag
 
             # create subfolder if it doesn't exist
             # check to make sure the model is not already in the correct subfolder
