@@ -203,7 +203,10 @@ def download_section():
     })
 
     def get_model_info_by_url(url, subfolder):
-        model_id = civitai.get_model_id_from_url(url)
+        result = civitai.get_model_id_from_url(url, include_model_ver=True)
+        if not result:
+            return None
+        model_id, model_version_id = result
         data = model_action_civitai.get_model_info_by_id(model_id)
 
         if not data:
@@ -258,6 +261,14 @@ def download_section():
 
             state["files_count"][version] = files_count
 
+        # Pre-select the version matching the modelVersionId query param, if present.
+        default_version = version_strs[0]
+        if model_version_id:
+            for vs in version_strs:
+                if vs.endswith(f"_{model_version_id}"):
+                    default_version = vs
+                    break
+
         if util.GRADIO_FALLBACK:
             return [
                 state, data["model_name"], data["model_type"],
@@ -267,7 +278,7 @@ def download_section():
                 ),
                 dl_version_drop.update(
                     choices=version_strs,
-                    value=version_strs[0]
+                    value=default_version
                 ),
                 files_row.update(
                     visible=True
@@ -282,7 +293,7 @@ def download_section():
             ),
             gr.Dropdown(
                 choices=version_strs,
-                value=version_strs[0]
+                value=default_version
             ),
             gr.Column(
                 visible=True
