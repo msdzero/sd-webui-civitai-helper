@@ -100,20 +100,22 @@ def scan_single_model(filepath, model_type, refetch_old, organize_models, delay)
             model_info = dummy_model_info(filepath, civitai_hash, model_type)
             yield True
 
-        # if model is lora and not already in a subfolder, move into subfolder based on its type (character,
-        # clothing, etc.)
-        if organize_models and model_type in ["lora", "lycoris"]:
-            filepath = civitai.move_model_to_subfolder(filepath, model_info)
-
-        model.process_model_info(filepath, model_info, model_type, refetch_old=refetch_old)
-
         # delay before next request, to prevent being treated as a DDoS attack
         time.sleep(delay)
 
     else:
+        model_info = model.load_model_info(info_file) or {}
+
         util.printD(f"Model metadata not needed for {filename}")
 
-    yield True
+    # if model is lora and not already in a subfolder, move into subfolder based on its type (character,
+    # clothing, etc.)
+    if organize_models and model_type in ["lora", "lycoris"]:
+        filepath = civitai.move_model_to_subfolder(filepath, model_info)
+
+    model.process_model_info(filepath, model_info, model_type, refetch_old=refetch_old)
+
+    yield [filepath]
 
 
 def scan_model(scan_model_types, refetch_old, organize_models=False, progress=gr.Progress()):
@@ -145,6 +147,9 @@ def scan_model(scan_model_types, refetch_old, organize_models=False, progress=gr
     models = []
     for model_type, model_folder in model.folders.items():
         if model_type not in model_types:
+            continue
+
+        if model_type == "lycoris" and util.get_opts("ch_dl_lyco_to_lora"):
             continue
 
         util.printD(f"Scanning path: {model_folder}")
@@ -184,7 +189,12 @@ def scan_model(scan_model_types, refetch_old, organize_models=False, progress=gr
                 progress(percent, desc=status)
                 continue
 
-            success = result
+            if isinstance(result, list):
+                # scan_single_model yielded the (possibly moved) filepath
+                filepath = result[0]
+                success = True
+            else:
+                success = result
             break
 
         if not success:

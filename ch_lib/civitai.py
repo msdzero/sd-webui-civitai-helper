@@ -762,20 +762,34 @@ def move_model_to_subfolder(filepath, model_info):
     if model_id == "":
         return None
 
-    content = civitai_get(f'{URLS["modelId"]}{model_id}')
+    base, _ = os.path.splitext(filepath)
+    local_info_file = f"{base}{SUFFIX}{model.CIVITAI_EXT}"
 
-    tags = content["tags"]
+    tags = []
+
+    if os.path.isfile(local_info_file):
+        local_info = model.load_model_info(local_info_file) or {}
+        tags = local_info.get("model", {}).get("tags", [])
+        local = True
+    else:
+        content = civitai_get(f'{URLS["modelId"]}{model_id}')
+
+        tags = content["tags"]
+        local = False
 
     # iterate through tags until we find one that matches MODEL_CATEGORIES
 
     for tag in tags:
-        cleaned_tag = re.sub(r'[^a-z]', '', tag.lower()).strip()
+        cleaned_tag = re.sub(r"[^a-z0-9\s]+", "", str(tag).lower()).strip()
+        cleaned_tag = re.sub(r"\s+", " ", cleaned_tag)
         if cleaned_tag in MODEL_CATEGORIES:
             model_category = cleaned_tag
 
             # create subfolder if it doesn't exist
             # check to make sure the model is not already in the correct subfolder
-            if model_category in filepath:
+            current_folder = os.path.dirname(filepath)
+
+            if model_category in current_folder:
                 return filepath
 
             # get the file path without the filename
@@ -797,6 +811,22 @@ def move_model_to_subfolder(filepath, model_info):
             # move the file to the new folder
             new_filepath = os.path.join(new_folder_path, os.path.basename(filepath))
             os.rename(filepath, new_filepath)
+
+            if local:
+                local_json_file = f"{base}{model.SDWEBUI_EXT}"
+                local_preview_file = f"{base}.preview.jpg"
+
+                new_info_filepath = os.path.join(new_folder_path, os.path.basename(local_info_file))
+                new_json_filepath = os.path.join(new_folder_path, os.path.basename(local_json_file))
+                new_preview_filepath = os.path.join(new_folder_path, os.path.basename(local_preview_file))
+
+                if os.path.isfile(local_json_file):
+                    os.rename(local_json_file, new_json_filepath)
+                if os.path.isfile(local_info_file):
+                    os.rename(local_info_file, new_info_filepath)
+                if os.path.isfile(local_preview_file):
+                    os.rename(local_preview_file, new_preview_filepath)
+
 
             return new_filepath
 
