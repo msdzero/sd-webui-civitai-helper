@@ -43,7 +43,8 @@ def open_model_url(msg):
         util.printD(f"model id from info file of {model_type} {search_term} is None")
         return ""
 
-    url = f'{civitai.URLS["modelPage"]}{model_id}'
+    model_version_id = model_info["id"]
+    url = f'{civitai.URLS["modelPage"]}{model_id}?modelVersionId={model_version_id}'
 
     # msg content for js
     content = {

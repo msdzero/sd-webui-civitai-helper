@@ -383,7 +383,7 @@ def build_article_from_version(version):
         )
 
     article = templates.article.substitute(
-        url=f'{civitai.URLS["modelPage"]}{model_id}',
+        url=f'{civitai.URLS["modelPage"]}{model_id}?modelVersionId={new_version_id}',
         thumbnail=thumbnail,
         download=download_section,
         description=description_section,
