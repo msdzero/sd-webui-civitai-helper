@@ -19,7 +19,7 @@ article = Template(util.dedent("""
 """).strip())
 
 thumbnail = Template(util.dedent("""
-    <img src='$img_url' style='float: left; margin: 5px;'>
+    <img src='$img_url' style='float: left; margin: 5px; width: 16rem;'>
 """).strip())
 
 description = Template(util.dedent("""
