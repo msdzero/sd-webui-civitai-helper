@@ -18,6 +18,7 @@ from . import util
 
 # this is the default root path
 ROOT_PATH = paths_internal.data_path
+MODELS_PATH = getattr(paths_internal, "models_path", os.path.join(ROOT_PATH, "models"))
 
 EXTS = (".bin", ".pt", ".safetensors", ".ckpt", ".gguf", ".zip")
 CIVITAI_EXT = ".info"
@@ -30,16 +31,14 @@ so to make extension work with those absolute model folder paths, model
 folder also need to be in absolute path
 """
 folders = {
-    "ti": os.path.join(ROOT_PATH, "embeddings"),
-    "hyper": os.path.join(ROOT_PATH, "models", "hypernetworks"),
-    "ckp": os.path.join(ROOT_PATH, "models", "Stable-diffusion"),
-    "lora": os.path.join(ROOT_PATH, "models", "Lora"),
-    "lycoris": os.path.join(ROOT_PATH, "models", "LyCORIS"),
-    "vae": os.path.join(ROOT_PATH, "models", "VAE"),
-    # ---
-    "controlnet": os.path.join(ROOT_PATH, "models", "Controlnet"),
-    "detection": os.path.join(ROOT_PATH, "models", "adetailer"),
-    # ---
+    "ti": os.path.join(MODELS_PATH, "embeddings"),
+    "hyper": os.path.join(MODELS_PATH, "hypernetworks"),
+    "ckp": os.path.join(MODELS_PATH, "Stable-diffusion"),
+    "lora": os.path.join(MODELS_PATH, "Lora"),
+    "lycoris": os.path.join(MODELS_PATH, "LyCORIS"),
+    "vae": os.path.join(MODELS_PATH, "VAE"),
+    "controlnet": os.path.join(MODELS_PATH, "Controlnet"),
+    "detection": os.path.join(MODELS_PATH, "adetailer"),
 }
 
 
