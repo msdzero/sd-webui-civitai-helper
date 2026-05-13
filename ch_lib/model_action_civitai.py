@@ -285,13 +285,16 @@ def get_model_info_by_input(
     max_size_preview = util.get_opts("ch_max_size_preview")
     nsfw_preview_threshold = util.get_opts("ch_nsfw_threshold")
 
-    # parse model id
-    model_id = civitai.get_model_id_from_url(model_url_or_id)
-    if not model_id:
+    # Parse IDs from URL or numeric input. If a modelVersionId query param
+    # is provided, prefer fetching that exact version.
+    result = civitai.get_model_id_from_url(model_url_or_id, include_model_ver=True)
+    if not result:
         output = f"failed to parse model id from url: {model_url_or_id}"
         util.printD(output)
         yield output
         return
+
+    model_id, model_version_id = result
 
     # get model file path
     # model could be in subfolder
@@ -303,9 +306,18 @@ def get_model_info_by_input(
         yield output
         return
 
-    # get model info
-    #we call it model_info, but in civitai, it is actually version info
-    model_info = civitai.get_version_info_by_model_id(model_id)
+    # Get model info.
+    # We call it model_info, but on Civitai this is actually version info.
+    if model_version_id:
+        model_info = civitai.get_version_info_by_version_id(model_version_id)
+    else:
+        model_info = civitai.get_version_info_by_model_id(model_id)
+
+    if not model_info:
+        output = f"failed to get model info from civitai for url: {model_url_or_id}"
+        util.printD(output)
+        yield output
+        return
 
     model.process_model_info(model_path, model_info, model_type)
 
