@@ -115,6 +115,11 @@ def scan_single_model(filepath, model_type, refetch_old, organize_models, delay)
 
     model.process_model_info(filepath, model_info, model_type, refetch_old=refetch_old)
 
+    # Apply the model's createdAt timestamp to the model file itself
+    created_at = model_info.get("createdAt") if isinstance(model_info, dict) else None
+    if created_at:
+        model.set_file_timestamps(filepath, created_at)
+
     yield [filepath]
 
 

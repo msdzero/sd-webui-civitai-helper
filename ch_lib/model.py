@@ -5,7 +5,9 @@ import glob
 import os
 import json
 import re
+import time as _time
 import urllib.parse
+from datetime import datetime, timezone
 from PIL import Image
 import piexif
 import piexif.helper
@@ -225,6 +227,23 @@ def verify_overwrite_eligibility(path, new_data):
     return True
 
 
+def set_file_timestamps(path: str, created_at: str):
+    """
+    Set the access and modification times of a file to match the
+    model's createdAt timestamp from Civitai.
+
+    created_at: ISO 8601 string, e.g. "2025-09-30T17:21:51.530Z"
+    """
+    if not created_at or not os.path.isfile(path) or not util.get_opts("ch_set_file_timestamp"):
+        return
+    try:
+        dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+        ts = dt.timestamp()
+        os.utime(path, (ts, ts))
+    except Exception as e:
+        util.printD(f"Failed to set timestamps on {path}: {e}")
+
+
 def write_info(data, path, info_type):
     """ Writes model info to a file """
     util.printD(f"Write model {info_type} info to file: {path}")
@@ -321,7 +340,10 @@ def process_model_info(model_path, model_info, model_type="ckp", refetch_old=Fal
                         continue
 
                     img["local_file"] = outpath
+                    set_file_timestamps(outpath, created_at)
                     updated = True
+
+    created_at = model_info.get("createdAt")
 
     # civitai model info file
     if metadata_needed_for_type(info_file, "civitai", refetch_old) or updated:
@@ -329,6 +351,7 @@ def process_model_info(model_path, model_info, model_type="ckp", refetch_old=Fal
             try:
                 if verify_overwrite_eligibility(info_file, model_info):
                     write_info(model_info, info_file, "civitai")
+                    set_file_timestamps(info_file, created_at)
 
             except VersionMismatchException as e:
                 util.printD(f"{e}, aborting")
@@ -336,6 +359,7 @@ def process_model_info(model_path, model_info, model_type="ckp", refetch_old=Fal
 
         else:
             write_info(model_info, info_file, "civitai")
+            set_file_timestamps(info_file, created_at)
 
     if not util.get_opts("ch_dl_webui_metadata"):
         return
@@ -346,10 +370,10 @@ def process_model_info(model_path, model_info, model_type="ckp", refetch_old=Fal
         util.printD(f"Metadata not needed for: {sd15_file}.")
         return
 
-    process_sd15_info(sd15_file, model_info, parent, model_type, refetch_old)
+    process_sd15_info(sd15_file, model_info, parent, model_type, refetch_old, created_at)
 
 
-def process_sd15_info(sd15_file, model_info, parent, model_type, refetch_old):
+def process_sd15_info(sd15_file, model_info, parent, model_type, refetch_old, created_at=None):
     """ Creates/Processes [model_name].json """
 
     # sd v1.5 model info file
@@ -431,8 +455,10 @@ def process_sd15_info(sd15_file, model_info, parent, model_type, refetch_old):
     if refetch_old:
         if verify_overwrite_eligibility(sd15_file, sd_data):
             write_info(sd_data, sd15_file, "webui")
+            set_file_timestamps(sd15_file, created_at)
     else:
         write_info(sd_data, sd15_file, "webui")
+        set_file_timestamps(sd15_file, created_at)
 
 
 def load_model_info(path):

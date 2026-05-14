@@ -506,7 +506,9 @@ def get_preview_image_by_model_path(model_path: str, max_size_preview, nsfw_prev
         return
 
     try:
-        images = model.load_model_info(info_file)["images"]
+        info_data = model.load_model_info(info_file)
+        images = info_data["images"]
+        created_at = info_data.get("createdAt")
 
     except (KeyError, TypeError):
         return
@@ -535,6 +537,7 @@ def get_preview_image_by_model_path(model_path: str, max_size_preview, nsfw_prev
             success, msg = result
 
             if success:
+                model.set_file_timestamps(msg, created_at)
                 return
 
             util.printD(msg)
@@ -547,9 +550,10 @@ def get_preview_image_by_model_path(model_path: str, max_size_preview, nsfw_prev
                 preview_path, img_dict, max_size_preview, nsfw_preview_threshold
         ):
             if not isinstance(result, str):
-                success, _ = result
+                success, saved_path = result
                 # Only download one image
                 if success:
+                    model.set_file_timestamps(saved_path, created_at)
                     return
 
                 break

@@ -374,6 +374,15 @@ def on_ui_settings():
                 "https://github.com/zixaphir/Stable-Diffusion-Webui-Civitai-Helper/wiki/Civitai-Resource-Metadata"
             )
         )
+    shared.opts.add_option(
+        "ch_set_file_timestamp",
+        shared.OptionInfo(
+            False,
+            "Set file timestamps based on model's createdAt metadata",
+            gr.Checkbox,
+            {"interactive": True},
+            section=section)
+    )
     shared.opts.onchange(
         "ch_proxy",
         update_proxy
