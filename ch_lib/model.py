@@ -41,6 +41,7 @@ folders = {
     "vae": os.path.join(MODELS_PATH, "VAE"),
     "controlnet": os.path.join(MODELS_PATH, "Controlnet"),
     "detection": os.path.join(MODELS_PATH, "adetailer"),
+    "upscaler": os.path.join(MODELS_PATH, "ESRGAN"),
 }
 
 
@@ -234,14 +235,21 @@ def set_file_timestamps(path: str, created_at: str):
 
     created_at: ISO 8601 string, e.g. "2025-09-30T17:21:51.530Z"
     """
-    if not created_at or not os.path.isfile(path) or not util.get_opts("ch_set_file_timestamp"):
+    if not created_at:
+        util.printD(f"set_file_timestamps: skipping {path} — no createdAt value")
+        return
+    if not os.path.isfile(path):
+        util.printD(f"set_file_timestamps: skipping {path} — file not found")
+        return
+    if not util.get_opts("ch_set_file_timestamp"):
         return
     try:
         dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
         ts = dt.timestamp()
         os.utime(path, (ts, ts))
+        util.printD(f"set_file_timestamps: updated {path} to {created_at}")
     except Exception as e:
-        util.printD(f"Failed to set timestamps on {path}: {e}")
+        util.printD(f"set_file_timestamps: FAILED on {path}: {e}")
 
 
 def write_info(data, path, info_type):
@@ -299,6 +307,8 @@ def process_model_info(model_path, model_info, model_type="ckp", refetch_old=Fal
         model_info.get("skeleton_file", False)
     )
 
+    created_at = model_info.get("createdAt")
+
     # Download preview images locally, for other extensions to display without
     # depending on civitai being up, or an internet connection at all.
     updated = False
@@ -343,8 +353,6 @@ def process_model_info(model_path, model_info, model_type="ckp", refetch_old=Fal
                     set_file_timestamps(outpath, created_at)
                     updated = True
 
-    created_at = model_info.get("createdAt")
-
     # civitai model info file
     if metadata_needed_for_type(info_file, "civitai", refetch_old) or updated:
         if refetch_old:
@@ -352,6 +360,7 @@ def process_model_info(model_path, model_info, model_type="ckp", refetch_old=Fal
                 if verify_overwrite_eligibility(info_file, model_info):
                     write_info(model_info, info_file, "civitai")
                     set_file_timestamps(info_file, created_at)
+                    set_file_timestamps(model_path, created_at)
 
             except VersionMismatchException as e:
                 util.printD(f"{e}, aborting")
@@ -360,6 +369,7 @@ def process_model_info(model_path, model_info, model_type="ckp", refetch_old=Fal
         else:
             write_info(model_info, info_file, "civitai")
             set_file_timestamps(info_file, created_at)
+            set_file_timestamps(model_path, created_at)
 
     if not util.get_opts("ch_dl_webui_metadata"):
         return

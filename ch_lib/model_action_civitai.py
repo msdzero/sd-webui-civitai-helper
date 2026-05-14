@@ -255,9 +255,8 @@ def dummy_model_info(path, sha256_hash, model_type):
 
     try:
         read_metadata = sd_models.read_metadata_from_safetensors(path)
-    except AssertionError:
-        # model is not a safetensors file. This is fine,
-        # it just doesn't have metadata we can read
+    except Exception:
+        # model is not a safetensors file (e.g. .pt) or has unreadable metadata
         return model_info
 
     tag_frequency = read_metadata.get("ss_tag_frequency", {})

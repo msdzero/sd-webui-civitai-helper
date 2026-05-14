@@ -25,7 +25,8 @@ MODEL_TYPES = {
     "LORA": "lora",
     "LoCon": "lycoris",
     "DoRA": "lora",
-    "VAE": "vae"
+    "VAE": "vae",
+    "Upscaler": "upscaler"
 }
 
 MODEL_CATEGORIES = {
