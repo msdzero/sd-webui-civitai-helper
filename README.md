@@ -1,5 +1,5 @@
 > [!NOTE]
-> This is a personal fork, intended to work with [Forge Neo](https://github.com/Haoming02/sd-webui-forge-classic/tree/neo). It hasn't tested with any other version of webui.
+> I mainly use this extension with [Forge Neo](https://github.com/Haoming02/sd-webui-forge-classic/tree/neo). It hasn't tested with any other version of webui.
 
 ## About Civitai Helper
 This extension provides the ability to download models and model metadata from Civitai. Data such as activation keywords, model description, version information, and model previews for models hosted on Civitai can be at your fingertips without having to navigate away from stable diffusion webui.
