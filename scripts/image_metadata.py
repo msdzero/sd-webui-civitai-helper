@@ -5,7 +5,7 @@ from pathlib import Path
 from functools import reduce
 
 from ch_lib import util
-from modules import script_callbacks, extra_networks, prompt_parser, processing, sd_models, infotext_utils
+from modules import script_callbacks, extra_networks, prompt_parser, processing, sd_models, infotext_utils, shared
 import networks # extensions-builtin\sd_forge_lora\networks.py
 try:
     from backend.args import dynamic_args
@@ -116,6 +116,32 @@ def add_resource_metadata(params):
         else:
             util.printD(f"Error: '{extra_network_name}' alias not found.")
 
+    # Find upscalers that have civitai info files
+    upscaler_civitai_paths = {}
+    for upscaler_data in shared.sd_upscalers:
+        if not upscaler_data.data_path:
+            continue
+        info_path = Path(upscaler_data.data_path).with_suffix(".civitai.info")
+        if info_path.is_file():
+            upscaler_civitai_paths[upscaler_data.name] = upscaler_data.data_path
+
+    # Add upscaler metadata if any tracked upscaler was used
+    if upscaler_civitai_paths:
+        upscalers_used = set()
+        # Check hires fix upscaler from processing object
+        if isinstance(sd_processing, processing.StableDiffusionProcessingTxt2Img) and sd_processing.enable_hr:
+            if sd_processing.hr_upscaler:
+                upscalers_used.add(sd_processing.hr_upscaler)
+        # Check generation parameters for any other upscaler references.
+        # Some scripts (e.g. Ultimate SD Upscale) save the upscaler name without
+        # file extension under arbitrary key names, so match by value directly.
+        for key, value in generation_parameters.items():
+            if isinstance(value, str) and value in upscaler_civitai_paths:
+                upscalers_used.add(value)
+        for upscaler_name in upscalers_used:
+            if upscaler_name in upscaler_civitai_paths:
+                add_civitai_resource(upscaler_civitai_paths[upscaler_name], type_name="upscaler")
+
     # Get embedding file paths
     embed_filepaths = {}
     try:
@@ -132,7 +158,7 @@ def add_resource_metadata(params):
         embed_weights = {}
         try:
             embed_regex = re.compile(r"(?:^|[\s,.])(" + '|'.join(re.escape(embed_name) for embed_name in embed_filepaths.keys()) + r")(?:$|[\s,.])", re.IGNORECASE | re.MULTILINE)
-            
+
             for prompt, steps, is_positive in prompt_list:
                 # parse all special prompt rules
                 comments_stripped = comments.strip_comments(prompt).strip()
