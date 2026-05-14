@@ -389,30 +389,35 @@ def process_sd15_info(sd15_file, model_info, parent, model_type, refetch_old, cr
     if version_info is not None:
         sd_data["notes"] = version_info
 
-    # AFAIK civitai model versions are currently:
-    # SD 1.4, SD 1.5, SD 2.0, SD 2.0 786, SD 2.1, SD 2.1 786
-    # SD 2.1 Unclip, SDXL 0.9, SDXL 1.0, and Other.
-    # Conveniently, the 4th character is all we need for webui.
-    #
+    # Map Civitai baseModel strings to Forge preset names.
+    # Entries are checked in order; first match wins (most specific first).
+    _FORGE_PRESET_MAP = [
+        ("flux.2",         "klein"),
+        ("flux.1",         "flux"),
+        ("illustrious",    "xl"),
+        ("pony",           "xl"),
+        ("noobai",         "xl"),
+        ("sdxl",           "xl"),
+        ("sd 1.",          "sd"),
+        ("sd 2.",          "sd"),
+        ("wan",            "wan"),
+        ("lumina",         "lumina"),
+        ("qwen",           "qwen"),
+        ("zimage",         "zit"),
+        ("anima",          "anima"),
+        ("ernie",          "ernie"),
+    ]
+
     # INFO: On Civitai, all models list base model/"sd version".
     # The SD WebUI interface only displays them for Lora/Lycoris.
-    #
-    # I'm populating the field anyways in hopes it eventually gets
-    # added.
-    base_model = model_info.get("baseModel", None)
-    sd_version = 'Unknown'
-    if base_model:
-        version = None
-        try:
-            version = base_model[3]
-        except IndexError:
-            version = 0
-
-        sd_version = {
-            "1": 'SD1',
-            "2": 'SD2',
-            "L": 'SDXL',
-        }.get(version, 'Unknown')
+    # Populated here so it is available if/when webui exposes it.
+    base_model = model_info.get("baseModel", "")
+    base_model_lower = base_model.lower()
+    sd_version = "Unknown"
+    for needle, preset in _FORGE_PRESET_MAP:
+        if needle in base_model_lower:
+            sd_version = preset
+            break
 
     sd_data["sd version"] = sd_version
 
