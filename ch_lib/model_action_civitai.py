@@ -898,6 +898,8 @@ def dl_model_by_input(
     version_info = civitai.get_version_info_by_version_id(ver_info["id"])
     model.process_model_info(output, version_info, model_type)
 
+    model.set_file_timestamps(output, model_info.get("createdAt"))
+
     # then, get preview image + webui-visible progress
     for result in civitai.get_preview_image_by_model_path(
         output,
