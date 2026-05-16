@@ -752,6 +752,17 @@ def download_multiple_section():
         # remove leading slashes and double-slashes from subfolders
         subfolders = [directory.lstrip("\\").lstrip("/") for directory in subfolders]
 
+        tags = data["model_info"].get("tags", [])
+        for tag in tags:
+            cleaned_tag = re.sub(r"[^a-z0-9\s]+", "", str(tag).lower()).strip()
+            cleaned_tag = re.sub(r"\s+", " ", cleaned_tag)
+            for sf in subfolders:
+                if cleaned_tag in sf.lower():
+                    subfolder = sf
+                    break
+            if subfolder != "":
+                break
+
         if util.GRADIO_FALLBACK:
             return [
                 dl_subfolder_drop.update(
