@@ -20,12 +20,16 @@ Original Civitai Page by butaixianran: [Civitai Url](https://civitai.com/models/
 * Scans all models to download model information and preview images from Civitai.
 * Link local model to a civitai model by civitai model's url
 * Download a model(with info and preview) by Civitai Url into SD's model folder or subfolders.
+  * Subfolder is automatically pre-selected when a model tag matches a known subfolder.
+  * Subfolder is also pre-selected on batch (multi) downloads.
 * Downloading can be resumed if an issue occurs, which is good for large files.
+* Upscaler models can be downloaded and scanned.
+* File timestamps can be set using the model's `createdAt` date from Civitai, both during scanning and downloading.
 * Checking all your local models for new versions from Civitai
 * Download a new version directly into SD model folder (with info and preview)
 * Modified Built-in "Extra Network" cards, to add the following buttons on each card:
   - 🖼️: Modified "replace preview" text into this icon
-  - 🌐: Open this model's Civitai url in a new tab
+  - 🌐: Open this model's Civitai url in a new tab (includes model version ID in the link)
   - 💡: Add this model's trigger words to prompt
   - ✏️: Rename model
   - ❌: Remove/Delete model
@@ -116,11 +120,14 @@ This data can be accessed by clicking the metadata button on the model card.
 
 ## Download
 To download a model by Civitai Model Page's Url, you need 3 steps:
-* Fill the Civitai URL or Model ID
+* Fill the Civitai URL or Model ID (version ID is also parsed from the URL and pre-selects the correct version)
 * Click "Get Model Info by Civitai Url.
 * It will fill in the details automatically, but you can change several options if you need to, including the model version, which subfolder to download the model to, and which optional files to download with the model, if any.
+  * If a model tag matches a known subfolder, that subfolder will be pre-selected automatically.
   * If you need to add more sub-folders, you must do this by navigating to the model directory on the system running your webui version.
 * Click download.
+
+You can optionally set the downloaded file's timestamp to the model's `createdAt` date from Civitai, which is useful for sorting models chronologically.
 
 ![](img/download_section.png)
 

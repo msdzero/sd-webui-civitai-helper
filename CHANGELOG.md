@@ -1,4 +1,22 @@
 # Change Log
+## v1.9.0
+* **Upscaler support**: Upscaler models can now be downloaded and scanned
+* **Auto subfolder selection**: Subfolder is automatically pre-selected when a model tag matches a known subfolder, both in single and batch download
+* **Timestamp management**: File timestamps can be set from the model's `createdAt` date on Civitai; this also applies during downloading
+* **Sort order option**: Added an option to choose how to sort images before selecting a preview image from Civitai
+* **Model version ID in Civitai links**: Visiting a model's Civitai page now includes the version ID in the URL for more accurate linking
+* **Preview images converted to JPG**: Preview images are always saved as JPG to reduce lag in the model browser when many models are present
+* **Enhanced scanning**: Improved model organization and metadata handling during the scanning process
+* **Upscaler added to Civitai resources**: Upscaler type is now included when reporting model resources used in generated images
+* **Duplicate check improvements**: Additional model types are now included when checking for duplicate models
+* **Updated SD version mapping**: Base model version list updated to match Forge Neo's preset list
+* **Dynamic model folder paths**: Model folder paths now use dynamic resolution, improving compatibility with Forge Neo
+* **API endpoint updated**: Switched API calls to `civitai.red`
+* **Model ID parsing improvements**: Version ID can now be extracted directly from a Civitai URL, and the default version is pre-selected automatically
+* **Download subfolder input**: Changed subfolder input from Checkbox to Textbox for more flexible subfolder entry
+* **Controlnet and ADetailer model paths**: Added model path configuration for Controlnet and ADetailer (via PR #149)
+* **Card button styling**: Refined button margins and padding in the Extra Networks section
+
 ## v1.8.13
 * Fix compatibility with non-Forge instances
 
