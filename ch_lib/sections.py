@@ -3,6 +3,7 @@ Sections for civitai_helper tab.
 """
 
 import gradio as gr
+import re
 from . import model
 from . import js_action_civitai
 from . import model_action_civitai
@@ -231,7 +232,18 @@ def download_section():
         filenames = data["filenames"]
 
         if subfolder == "" or subfolder not in subfolders:
+            # Try to auto-select a subfolder from the first matched model's tags
+            tags = data["model_info"].get("tags", [])
             subfolder = "/"
+            for tag in tags:
+                cleaned_tag = re.sub(r"[^a-z0-9\s]+", "", str(tag).lower()).strip()
+                cleaned_tag = re.sub(r"\s+", " ", cleaned_tag)
+                for sf in subfolders:
+                    if cleaned_tag in sf.lower():
+                        subfolder = sf
+                        break
+                if subfolder != "/":
+                    break
 
         for filename, base_model, version in zip(filenames, base_models, version_strs):
             state["filenames"][version] = filename
