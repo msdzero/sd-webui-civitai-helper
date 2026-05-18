@@ -55,8 +55,27 @@ def add_resource_metadata(params):
 
     checkpoint_set = set([sd_checkpoint_info.name])
 
-    prompt_list = [[sd_processing.prompt, sd_processing.steps, True], [sd_processing.negative_prompt, sd_processing.steps, False]]
-    extra_network_data = sd_processing.extra_network_data.values()
+    # Parse infotext first so it can serve as a fallback when params.p is a
+    # minimal object (e.g. when saving via the UI save button rather than during
+    # generation).  In that case attributes like prompt/negative_prompt/
+    # extra_network_data are not available on the processing object.
+    generation_parameters = infotext_utils.parse_generation_parameters(params.pnginfo['parameters'])
+
+    sd_prompt = getattr(sd_processing, 'prompt', generation_parameters.get('Prompt', ''))
+    sd_negative_prompt = getattr(sd_processing, 'negative_prompt', generation_parameters.get('Negative prompt', ''))
+    sd_steps = getattr(sd_processing, 'steps', int(generation_parameters.get('Steps', 20) or 20))
+
+    prompt_list = [[sd_prompt, sd_steps, True], [sd_negative_prompt, sd_steps, False]]
+
+    # Get extra_network_data from the processing object when available, otherwise
+    # fall back to parsing it from the prompt text (UI save button path).
+    raw_extra_network_data = getattr(sd_processing, 'extra_network_data', None)
+    if raw_extra_network_data is not None:
+        extra_network_data = raw_extra_network_data.values()
+    else:
+        prompt_stripped = (comments.strip_comments(sd_prompt) if comments else sd_prompt).strip()
+        _, parsed_network_data = extra_networks.parse_prompt(prompt_stripped)
+        extra_network_data = list(parsed_network_data.values())
 
     # Add hires. fix data
     if isinstance(sd_processing, processing.StableDiffusionProcessingTxt2Img) and sd_processing.enable_hr:
@@ -68,7 +87,6 @@ def add_resource_metadata(params):
     # TODO: img2img/upscale - add original image resources
 
     # Read prompt/generation data from other extensions, e.g., ADetailer, μDDetailer
-    generation_parameters = infotext_utils.parse_generation_parameters(params.pnginfo['parameters'])
     for key, value in generation_parameters.items():
         prompt_match = re_prompt.search(key)
         negative_prompt_match = re_negative_prompt.search(key)
