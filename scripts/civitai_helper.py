@@ -388,7 +388,7 @@ def on_ui_settings():
         update_proxy
     )
 
-util.GRADIO_FALLBACK = not util.newer_version(gr.__version__, "3.42.0")
+util.GRADIO_FALLBACK = not util.newer_version(gr.__version__, "4.0.0")
 
 script_callbacks.on_ui_settings(on_ui_settings)
 script_callbacks.on_ui_tabs(on_ui_tabs)
