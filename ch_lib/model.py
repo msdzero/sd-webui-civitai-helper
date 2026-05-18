@@ -609,12 +609,19 @@ def get_model_path_by_search_term(model_type, search_term):
     # `model_sub_path = search_term.split()[0]`
     # but it was failing on models containing spaces.
     model_hash = search_term.split()[-1]
-    model_sub_path = search_term.replace(f" {model_hash}", "")
+    if any(model_hash.endswith(ext) for ext in EXTS):
+        # No trailing hash; the last word is part of the filename itself
+        model_sub_path = search_term
+    else:
+        model_sub_path = search_term.replace(f" {model_hash}", "")
+
+    # Normalize double backslashes that may appear in Windows paths
+    model_sub_path = model_sub_path.replace("\\\\", "\\")
 
     if model_type == "hyper":
         model_sub_path = f"{search_term}.pt"
 
-    if model_sub_path[:1] == "/":
+    if model_sub_path[:1] in ("/", "\\"):
         model_sub_path = model_sub_path[1:]
 
     if model_type == "lora" and folders['lycoris']:
