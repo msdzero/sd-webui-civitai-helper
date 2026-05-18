@@ -411,11 +411,16 @@ def download_section():
     def update_dl_files_visibility(dl_all):
         files_chkboxes = []
         for chkbox in ch_dl_model_types_visibility:
-            files_chkboxes.append(
-                chkbox.update(
-                    visible=not dl_all
+            if util.GRADIO_FALLBACK:
+                files_chkboxes.append(
+                    chkbox.update(
+                        visible=not dl_all
+                    )
                 )
-            )
+            else:
+                files_chkboxes.append(
+                    gr.Column(visible=not dl_all)
+                )
 
         return files_chkboxes
 
