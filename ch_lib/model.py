@@ -25,6 +25,7 @@ MODELS_PATH = getattr(paths_internal, "models_path", os.path.join(ROOT_PATH, "mo
 EXTS = (".bin", ".pt", ".safetensors", ".ckpt", ".gguf", ".zip")
 CIVITAI_EXT = ".info"
 SDWEBUI_EXT = ".json"
+METADATA_JSON_EXT = ".metadata.json"
 
 """
 If command line arguement is used to change model folder,
@@ -280,6 +281,8 @@ def process_model_info(model_path, model_info, model_type="ckp", refetch_old=Fal
         return
 
     info_file, sd15_file = get_model_info_paths(model_path)
+    base, _ = os.path.splitext(model_path)
+    metadata_json_file = f"{base}{METADATA_JSON_EXT}"
     existing_info = {}
     try:
         existing_info = load_model_info(info_file)
@@ -361,6 +364,8 @@ def process_model_info(model_path, model_info, model_type="ckp", refetch_old=Fal
                     write_info(model_info, info_file, "civitai")
                     set_file_timestamps(info_file, created_at)
                     set_file_timestamps(model_path, created_at)
+                    if os.path.isfile(metadata_json_file):
+                        set_file_timestamps(metadata_json_file, created_at)
 
             except VersionMismatchException as e:
                 util.printD(f"{e}, aborting")
@@ -370,6 +375,8 @@ def process_model_info(model_path, model_info, model_type="ckp", refetch_old=Fal
             write_info(model_info, info_file, "civitai")
             set_file_timestamps(info_file, created_at)
             set_file_timestamps(model_path, created_at)
+            if os.path.isfile(metadata_json_file):
+                set_file_timestamps(metadata_json_file, created_at)
 
     if not util.get_opts("ch_dl_webui_metadata"):
         return
@@ -518,8 +525,9 @@ def get_model_files_from_model_path(model_path):
 
     info_file, sd15_file = get_model_info_paths(model_path)
     user_preview_path = f"{base}.png"
+    metadata_json_file = f"{base}{METADATA_JSON_EXT}"
 
-    paths = [model_path, info_file, sd15_file, user_preview_path]
+    paths = [model_path, info_file, sd15_file, user_preview_path, metadata_json_file]
     preview_paths = get_potential_model_preview_files(model_path)
 
     paths = paths + preview_paths

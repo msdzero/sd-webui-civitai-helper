@@ -119,6 +119,10 @@ def scan_single_model(filepath, model_type, refetch_old, organize_models, delay)
     created_at = model_info.get("createdAt") if isinstance(model_info, dict) else None
     if created_at:
         model.set_file_timestamps(filepath, created_at)
+        base, _ = os.path.splitext(filepath)
+        metadata_json = f"{base}{model.METADATA_JSON_EXT}"
+        if os.path.isfile(metadata_json):
+            model.set_file_timestamps(metadata_json, created_at)
 
     yield [filepath]
 
