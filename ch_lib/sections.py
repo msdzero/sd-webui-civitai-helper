@@ -81,8 +81,8 @@ def get_model_info_by_url_section():
     def get_model_names_by_input(model_type, empty_info_only):
         names = civitai.get_model_names_by_input(model_type, empty_info_only)
         if util.GRADIO_FALLBACK:
-            return model_name_drop.update(choices=names)
-        return gr.Dropdown(choices=names)
+            return model_name_drop.update(choices=names, value="")
+        return gr.Dropdown(choices=names, value="")
 
     no_info_model_names = civitai.get_model_names_by_input("ckp", False)
 

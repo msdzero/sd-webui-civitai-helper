@@ -281,7 +281,7 @@ def get_model_names_by_type_and_filter(model_type: str, metadata_filter: dict) -
     return: model name list
     """
 
-    if model_type == "lora" and model.folders['lycoris']:
+    if model_type == "lora" and model.folders['lycoris'] and not util.get_opts("ch_dl_lyco_to_lora"):
         model_folders = [model.folders[model_type], model.folders['lycoris']]
     else:
         model_folders = [model.folders[model_type]]
