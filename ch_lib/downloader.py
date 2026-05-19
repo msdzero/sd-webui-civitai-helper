@@ -210,7 +210,7 @@ def download_progress(
             # 416 - Range Not Satisfiable
 
             if dl_error.response.status_code != 416:
-                util.printD(f"An unhandled error has occurred while requesting data: {dl_error.response.status_cude}.")
+                util.printD(f"An unhandled error has occurred while requesting data: {dl_error.response.status_code}.")
                 raise
 
             util.printD("Could not resume download from existing temporary file. Restarting download.")

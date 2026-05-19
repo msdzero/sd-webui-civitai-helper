@@ -298,7 +298,7 @@ def make_new_filename(candidate_file, model_name, new_name):
     """
     path, filename = os.path.split(candidate_file)
 
-    if filename.index(model_name) != 0:
+    if not filename.startswith(model_name):
         output = util.indented_msg(f"""
             Could not find model_name in candidate file
             {model_name=}

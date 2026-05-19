@@ -245,7 +245,7 @@ def get_subfolders(folder:str) -> list[str]:
         return []
 
     prefix_len = len(folder)
-    full_dirs_searched = []
+    full_dirs_searched = set()
     subfolders = []
     for root, dirs, _ in os.walk(folder, followlinks=True):
         if root == folder:
@@ -258,7 +258,7 @@ def get_subfolders(folder:str) -> list[str]:
             try:
                 canonical_dir = os.path.realpath(full_dir_path, strict=True)
                 if canonical_dir not in full_dirs_searched:
-                    full_dirs_searched.append(canonical_dir)
+                    full_dirs_searched.add(canonical_dir)
                     follow.append(directory)
 
             except OSError:

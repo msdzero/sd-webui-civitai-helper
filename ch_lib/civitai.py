@@ -171,7 +171,7 @@ def get_model_info_by_id(model_id: str) -> dict:
 
     if not model_id:
         util.printD("model_id is empty")
-        return False
+        return None
 
     content = civitai_get(f'{URLS["modelId"]}{model_id}')
 
@@ -441,6 +441,7 @@ def verify_preview(path, img_dict, max_size_preview, nsfw_preview_threshold):
     img_url = img_dict.get("url", None)
     if img_url is None:
         yield (False, None)
+        return
 
     image_rating = img_dict.get("nsfwLevel", 32)
     if image_rating > 1:
@@ -448,11 +449,13 @@ def verify_preview(path, img_dict, max_size_preview, nsfw_preview_threshold):
         if NSFW_LEVELS[nsfw_preview_threshold] < image_rating:
             util.printD("Skip NSFW image")
             yield (False, None)
+            return
 
     preview_type = img_dict.get("type")
     if preview_type != "image":
         util.printD(f"Preview is not an image. Found {preview_type} instead. Skipping.")
         yield (False, None)
+        return
 
     img_url = get_image_url(img_dict, max_size_preview)
 

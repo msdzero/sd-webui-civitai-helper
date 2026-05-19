@@ -87,6 +87,7 @@ def scan_single_model(filepath, model_type, refetch_old, organize_models, delay)
             yield output
             time.sleep(delay)
             yield False
+            return
 
         civitai_hash = sha256_hash
         if use_auto_v3:
@@ -285,7 +286,7 @@ def dummy_model_info(path, sha256_hash, model_type):
                 tags.append(tag)
 
     elif isinstance(tag_frequency, str):
-        word = prefix_re.sub("", trained_word)
+        word = prefix_re.sub("", tag_frequency)
         trained_words.append(word)
 
     return model_info
@@ -387,7 +388,7 @@ def build_article_from_version(version):
     description_section = ""
     if description:
         description_section = templates.description.substitute(
-            description=util.safe_html(download_section),
+            description=util.safe_html(description),
         )
 
     article = templates.article.substitute(
@@ -582,7 +583,7 @@ def get_id_and_dl_url_by_version_str(version_str:str, model_info:dict) -> tuple:
     model_versions = model_info.get("modelVersions", None)
     if model_versions is None:
         util.printD("modelVersions is Empty")
-        return (False, output)
+        return (False, "modelVersions is Empty")
 
     # find version by version_str
     version = None
