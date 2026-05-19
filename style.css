@@ -357,4 +357,15 @@ blockquote ol {
         outline: 2px gold solid;
     }
 }
+#ch_extra_fetch_txt2img,
+#ch_extra_fetch_img2img,
+#ch_extra_clear_txt2img,
+#ch_extra_clear_img2img {
+    height: 42px !important;
+}
+
+#ch_extra_fetch_txt2img,
+#ch_extra_fetch_img2img {
+    margin-top: 19.59px !important;
+}
 /* End of Civitai Helper Browser */

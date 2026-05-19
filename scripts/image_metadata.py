@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from functools import reduce
 
-from ch_lib import util
+from ch_lib import util, extra_resources
 from modules import script_callbacks, extra_networks, prompt_parser, processing, sd_models, infotext_utils, shared
 import networks # extensions-builtin\sd_forge_lora\networks.py
 try:
@@ -200,6 +200,12 @@ def add_resource_metadata(params):
         for upscaler_name in upscalers_used:
             if upscaler_name in upscaler_civitai_paths:
                 add_civitai_resource(upscaler_civitai_paths[upscaler_name], type_name="upscaler")
+
+    # Merge any manually-added resources from the txt2img/img2img accordion
+    if extra_resources.get_enabled():
+        for extra in extra_resources.get():
+            if extra not in civitai_resource_list:
+                civitai_resource_list.append(extra)
 
     if len(civitai_resource_list) > 0:
         params.pnginfo['parameters'] += f", Civitai resources: {json.dumps(civitai_resource_list, separators=(',', ':'))}"

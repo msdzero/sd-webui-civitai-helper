@@ -966,4 +966,56 @@ onUiLoaded(() => {
     //run it once
     update_card_for_civitai();
 
+    // Inline remove buttons for the "Civitai Extra Resources" accordion
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest ? e.target.closest('.ch-extra-rm') : null;
+        if (!btn) { return; }
+        e.preventDefault();
+        e.stopPropagation();
+        var idx   = btn.getAttribute('data-idx');
+        var tabId = btn.getAttribute('data-tab');
+        var root  = gradioApp();
+        // Write the index into the hidden textbox
+        var txtbox = root.querySelector('#ch_extra_rm_idx_' + tabId + ' textarea');
+        if (txtbox) {
+            txtbox.value = idx;
+            txtbox.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        // Click the hidden Gradio button after Gradio has processed the input change
+        setTimeout(function() {
+            var hiddenBtn = root.querySelector('#ch_extra_rm_btn_' + tabId);
+            if (hiddenBtn) { hiddenBtn.click(); }
+        }, 50);
+    });
+
+    // Inline weight inputs for lora/lycoris items
+    document.addEventListener('change', function(e) {
+        var inp = e.target.closest ? e.target.closest('.ch-extra-weight') : null;
+        if (!inp) { return; }
+        var idx   = inp.getAttribute('data-idx');
+        var tabId = inp.getAttribute('data-tab');
+        var weight = inp.value;
+        var root  = gradioApp();
+        var txtbox = root.querySelector('#ch_extra_weight_data_' + tabId + ' textarea');
+        if (txtbox) {
+            txtbox.value = idx + ':' + weight;
+            txtbox.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        setTimeout(function() {
+            var hiddenBtn = root.querySelector('#ch_extra_weight_btn_' + tabId);
+            if (hiddenBtn) { hiddenBtn.click(); }
+        }, 50);
+    });
+
+    document.querySelectorAll('.ch_setting_link').forEach(el => {
+        el.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            document.getElementById('tab_settings-button').click();
+            document.getElementById('settings_civitai_helper-button').click();
+
+            return false;
+        });
+    });
 });})();
