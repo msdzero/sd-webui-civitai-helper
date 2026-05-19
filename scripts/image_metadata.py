@@ -134,32 +134,6 @@ def add_resource_metadata(params):
         else:
             util.printD(f"Error: '{extra_network_name}' alias not found.")
 
-    # Find upscalers that have civitai info files
-    upscaler_civitai_paths = {}
-    for upscaler_data in shared.sd_upscalers:
-        if not upscaler_data.data_path:
-            continue
-        info_path = Path(upscaler_data.data_path).with_suffix(".civitai.info")
-        if info_path.is_file():
-            upscaler_civitai_paths[upscaler_data.name] = upscaler_data.data_path
-
-    # Add upscaler metadata if any tracked upscaler was used
-    if upscaler_civitai_paths:
-        upscalers_used = set()
-        # Check hires fix upscaler from processing object
-        if isinstance(sd_processing, processing.StableDiffusionProcessingTxt2Img) and sd_processing.enable_hr:
-            if sd_processing.hr_upscaler:
-                upscalers_used.add(sd_processing.hr_upscaler)
-        # Check generation parameters for any other upscaler references.
-        # Some scripts (e.g. Ultimate SD Upscale) save the upscaler name without
-        # file extension under arbitrary key names, so match by value directly.
-        for key, value in generation_parameters.items():
-            if isinstance(value, str) and value in upscaler_civitai_paths:
-                upscalers_used.add(value)
-        for upscaler_name in upscalers_used:
-            if upscaler_name in upscaler_civitai_paths:
-                add_civitai_resource(upscaler_civitai_paths[upscaler_name], type_name="upscaler")
-
     # Get embedding file paths
     embedding_dir = dynamic_args['embedding_dir'] if dynamic_args else getattr(shared.cmd_opts, 'embeddings_dir', None)
     embed_filepaths = {}
@@ -200,6 +174,32 @@ def add_resource_metadata(params):
         # add final weights for embeddings
         for embed_name, weight in embed_weights.items():
             add_civitai_resource(embed_filepaths[embed_name], weight, "embed")
+
+    # Find upscalers that have civitai info files
+    upscaler_civitai_paths = {}
+    for upscaler_data in shared.sd_upscalers:
+        if not upscaler_data.data_path:
+            continue
+        info_path = Path(upscaler_data.data_path).with_suffix(".civitai.info")
+        if info_path.is_file():
+            upscaler_civitai_paths[upscaler_data.name] = upscaler_data.data_path
+
+    # Add upscaler metadata if any tracked upscaler was used
+    if upscaler_civitai_paths:
+        upscalers_used = set()
+        # Check hires fix upscaler from processing object
+        if isinstance(sd_processing, processing.StableDiffusionProcessingTxt2Img) and sd_processing.enable_hr:
+            if sd_processing.hr_upscaler:
+                upscalers_used.add(sd_processing.hr_upscaler)
+        # Check generation parameters for any other upscaler references.
+        # Some scripts (e.g. Ultimate SD Upscale) save the upscaler name without
+        # file extension under arbitrary key names, so match by value directly.
+        for key, value in generation_parameters.items():
+            if isinstance(value, str) and value in upscaler_civitai_paths:
+                upscalers_used.add(value)
+        for upscaler_name in upscalers_used:
+            if upscaler_name in upscaler_civitai_paths:
+                add_civitai_resource(upscaler_civitai_paths[upscaler_name], type_name="upscaler")
 
     if len(civitai_resource_list) > 0:
         params.pnginfo['parameters'] += f", Civitai resources: {json.dumps(civitai_resource_list, separators=(',', ':'))}"
