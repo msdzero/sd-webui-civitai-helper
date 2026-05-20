@@ -4,8 +4,12 @@ import os
 from pathlib import Path
 from functools import reduce
 
+from fastapi import params
+from matplotlib import image
+import piexif
+
 from ch_lib import util, extra_resources
-from modules import script_callbacks, extra_networks, prompt_parser, processing, sd_models, infotext_utils, shared
+from modules import script_callbacks, extra_networks, prompt_parser, processing, sd_models, infotext_utils, shared, images
 import networks # extensions-builtin\sd_forge_lora\networks.py
 try:
     from backend.args import dynamic_args
@@ -22,7 +26,13 @@ re_negative_prompt = re.compile(r"^(.+\s)neg(?:ative)?\sprompt(\s\S+)?$")
 re_checkpoint = re.compile(r"^(?!Hires).+\scheckpoint(?:\s\S+)?$")
 
 def add_resource_metadata(params):
+    util.printD("Adding resource metadata...")
     if not util.get_opts("ch_image_metadata") or 'parameters' not in params.pnginfo:
+        util.printD("Option not enabled or parameters missing. Skipping resource metadata...")
+        return
+    # Postprocessing saves have params.p == None; handled by add_postprocessing_metadata
+    if params.p is None:
+        util.printD("No processing object found. Assuming postprocessing save and skipping resource metadata...")
         return
 
     # StableDiffusionProcessing
@@ -210,4 +220,119 @@ def add_resource_metadata(params):
     if len(civitai_resource_list) > 0:
         params.pnginfo['parameters'] += f", Civitai resources: {json.dumps(civitai_resource_list, separators=(',', ':'))}"
 
+
+def add_postprocessing_metadata(params):
+    """Handle Extras-tab upscale saves: merge infotext and add upscaler civitai resources."""
+    util.printD("Adding postprocessing metadata...")
+
+    if not util.get_opts("ch_image_metadata"):
+        util.printD("Option not enabled or parameters missing. Skipping resource metadata...")
+        return
+
+    # Only for postprocessing saves (no processing object, postprocessing key present)
+    if params.p is not None:
+        util.printD("No processing object found. Assuming generation save and skipping postprocessing metadata...")
+        return
+    postprocessing_infotext = params.pnginfo.get("postprocessing")
+    if not postprocessing_infotext:
+        util.printD("No postprocessing infotext found. Skipping postprocessing metadata...")
+        return
+
+    # 1. Append postprocessing info to the parameters string so it travels with the image
+    if "parameters" not in params.pnginfo:
+        params.pnginfo["parameters"] = postprocessing_infotext
+
+    metadata_match = re.search(
+        r'Civitai metadata:\s*(\{.*\})',
+        params.pnginfo["parameters"]
+    )
+
+    metadata = {}
+
+    if metadata_match:
+        metadata = json.loads(metadata_match.group(1))
+
+    ori_seed = metadata.get("seed")
+
+    params.pnginfo["parameters"] = re.sub(
+        r'Seed:\s*-?\d+',
+        f'Seed: {ori_seed}',
+        params.pnginfo["parameters"]
+    )
+
+    metadata_resources = metadata.get("resources", [])
+
+    match = re.search(r'Civitai resources:\s*(\[[^\]]*\])', params.pnginfo["parameters"])
+
+    if match:
+        civitai_resource_list = json.loads(match.group(1))
+    else:
+        civitai_resource_list = []
+
+    civitai_resource_list.extend(metadata_resources)
+
+    upscaler_civitai_paths = {}
+    for upscaler_data in shared.sd_upscalers:
+        if not upscaler_data.data_path:
+            continue
+        info_path = Path(upscaler_data.data_path).with_suffix(".civitai.info")
+        if info_path.is_file():
+            upscaler_civitai_paths[upscaler_data.name] = upscaler_data.data_path
+
+    if upscaler_civitai_paths:
+        # The infotext format is: Postprocess upscaler: "Name", Postprocess upscaler 2: "Name"
+        for m in re.finditer(r'Postprocess upscaler(?:\s2)?:\s*("?)([^",]+)\1', postprocessing_infotext):
+            upscaler_name = m.group(2)
+            util.printD(f"Found upscaler in postprocessing infotext: '{upscaler_name}'")
+            if upscaler_name not in upscaler_civitai_paths:
+                continue
+            try:
+                file_path = Path(upscaler_civitai_paths[upscaler_name]).with_suffix(".civitai.info")
+                with open(file_path, 'r') as f:
+                    civitai_info = json.load(f)
+                resource = {
+                    "type": "upscaler",
+                    "modelVersionId": civitai_info["id"],
+                    "modelName": civitai_info["model"]["name"],
+                    "modelVersionName": civitai_info["name"],
+                }
+                if resource not in civitai_resource_list:
+                    civitai_resource_list.append(resource)
+            except Exception as e:
+                util.printD(f"Civitai upscaler info error: {e}")
+
+    if civitai_resource_list:
+        resources_json = json.dumps(civitai_resource_list, separators=(',', ':'))
+        if match:
+            params.pnginfo["parameters"] = re.sub(
+                r'Civitai resources:\s*\[[^\]]*\]',
+                f'Civitai resources: {resources_json}',
+                params.pnginfo["parameters"]
+            )
+        else:
+            params.pnginfo["parameters"] += f", Civitai resources: {resources_json}"
+
+    # Also update the "postprocessing" key so JPG/WebP EXIF gets the merged content
+    # (for PNG all keys are written; for JPG/WebP only "postprocessing" → EXIF UserComment)
+    params.pnginfo["postprocessing"] = params.pnginfo["parameters"]
+
+
+# def verify_postprocessing_saved(params):
+#     """Debug: read back the saved file and print what's actually in it."""
+#     if params.p is not None:
+#         return
+#     try:
+#         from PIL import Image
+#         saved_path = getattr(params.image, "already_saved_as", None) or params.filename
+#         img = Image.open(saved_path)
+
+#         geninfo = images.read_info_from_image(img)[0]
+
+#         images.save_image_with_geninfo(img, geninfo, saved_path)
+#     except Exception as e:
+#         util.printD(f"[verify] error reading back file: {e}")
+
+
 script_callbacks.on_before_image_saved(add_resource_metadata)
+script_callbacks.on_before_image_saved(add_postprocessing_metadata)
+# script_callbacks.on_image_saved(verify_postprocessing_saved)
