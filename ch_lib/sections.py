@@ -546,7 +546,7 @@ def download_section():
                                 label="",
                                 value=True,
                                 min_width=0,
-                                interactive=(not filetype == "Model")
+                                interactive=("Model" not in filetype)
                             )
                         with gr.Column(scale=1, min_width=0):
                             elems["txtbx"] = gr.Textbox(
@@ -798,7 +798,7 @@ def download_multiple_section():
 
         filetypes = []
         for file in model_version["files"]:
-            if file["type"] == "Model":
+            if "Model" in file["type"]:
                 filetypes.append("Model")
                 filename = file["name"]
                 filename_frags = filename.split(".")

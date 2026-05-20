@@ -480,7 +480,7 @@ def get_model_info_by_id(model_id:str) -> dict:
         filename = ""
         try:
             for filedata in version["files"]:
-                if filedata["type"] == "Model":
+                if "Model" in filedata["type"]:
                     filename = filedata["name"]
 
         except (ValueError, KeyError):
@@ -629,7 +629,7 @@ def parse_file_info(file_info, basename):
     filetype = file_info.get("type", "Model")
     filename = file_info.get("name", "")
 
-    if basename and filetype != "VAE":
+    if basename and filetype not in ("VAE", "Text Encoder"):
         # basename already includes extension (e.g. "mymodel.safetensors")
         filename = basename
 
@@ -696,6 +696,8 @@ def download_files(filename, model_folder, ver_info, headers, filetypes, dl_all,
         dl_folder = model_folder
         if dl_info["type"] == "VAE":
             dl_folder = model.folders["vae"]
+        elif dl_info["type"] == "Text Encoder":
+            dl_folder = os.path.join(model.MODELS_PATH, "text_encoder")
 
         # webui visible progress bar
         for result in downloader.dl_file(
@@ -717,7 +719,7 @@ def download_files(filename, model_folder, ver_info, headers, filetypes, dl_all,
             errors_count += 1
             continue
 
-        if dl_info["type"] == "Model":
+        if "Model" in dl_info["type"]:
             filepath = output
 
     additional = None

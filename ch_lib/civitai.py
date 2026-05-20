@@ -48,7 +48,7 @@ MODEL_CATEGORIES = {
 }
 
 FILE_TYPES = [
-    "Model", "Config", "VAE" # , "Training Data"
+    "Model", "Config", "VAE", "Diffusion Model", "Text Encoder" # , "Training Data"
 ]
 
 # https://github.com/civitai/civitai/blob/a7b9fbfadc0e463b568be015c381e2452e32b210/src/server/common/enums.ts#L196-L203

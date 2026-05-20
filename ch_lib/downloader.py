@@ -11,7 +11,9 @@ from tqdm import tqdm
 import requests
 import urllib3
 from PIL import Image, ImageOps
+
 from . import util
+from . import model
 
 
 DL_EXT = ".downloading"
@@ -398,10 +400,18 @@ def dl_file(
                     count += 1
 
             elif duplicate != "Overwrite":
-                yield (
-                    False,
-                    f"File {file_path} already exists! Download will not proceed."
-                )
+                info_file, _ = model.get_model_info_paths(file_path)
+
+                if os.path.isfile(info_file):
+                    yield (
+                        False,
+                        f"File {file_path} already exists! Download will not proceed."
+                    )
+                else:
+                    yield (
+                        True,
+                        file_path
+                    )
                 return
 
         # get file size

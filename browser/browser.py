@@ -313,7 +313,7 @@ def parse_model(model):
 
     if files:
         for file in files:
-            if file["type"] != "Model":
+            if "Model" not in file["type"]:
                 continue
             download = file.get("downloadUrl", None)
             break
