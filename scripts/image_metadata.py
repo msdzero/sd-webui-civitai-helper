@@ -4,12 +4,14 @@ import os
 from pathlib import Path
 from functools import reduce
 
+import gradio as gr
 from fastapi import params
 from matplotlib import image
 import piexif
 
 from ch_lib import util, extra_resources
 from modules import script_callbacks, extra_networks, prompt_parser, processing, sd_models, infotext_utils, shared, images
+from modules import scripts_postprocessing
 import networks # extensions-builtin\sd_forge_lora\networks.py
 try:
     from backend.args import dynamic_args
@@ -24,6 +26,31 @@ except ModuleNotFoundError:
 re_prompt = re.compile(r"^(?!.+\sneg(?:ative)?)(.+\s)prompt(\s\S+)?$")
 re_negative_prompt = re.compile(r"^(.+\s)neg(?:ative)?\sprompt(\s\S+)?$")
 re_checkpoint = re.compile(r"^(?!Hires).+\scheckpoint(?:\s\S+)?$")
+
+# Checkbox state set by ScriptPostprocessingCivitaiHelper.process() before each save.
+_preserve_infotext = True
+
+
+class ScriptPostprocessingCivitaiHelper(scripts_postprocessing.ScriptPostprocessing):
+    """Adds a 'Preserve Original Infotext' checkbox to the Extras tab."""
+
+    name = "Civitai Helper"
+    order = 9000  # appear after upscalers / face restoration
+
+    def ui(self):
+        with gr.Accordion("Civitai Helper", open=True, elem_id="ch_extras_accordion"):
+            preserve = gr.Checkbox(
+                label="Preserve Original Infotext",
+                value=True,
+                elem_id="ch_extras_preserve_infotext",
+                info="Merge the source image's generation parameters into the saved upscale metadata. Requires 'Automatically add resource metadata' in Settings › Civitai Helper.",
+            )
+        return {"preserve_infotext": preserve}
+
+    def process(self, pp: scripts_postprocessing.PostprocessedImage, **args):
+        global _preserve_infotext
+        _preserve_infotext = args.get("preserve_infotext", True)
+
 
 def add_resource_metadata(params):
     util.printD("Adding resource metadata...")
@@ -227,6 +254,10 @@ def add_postprocessing_metadata(params):
 
     if not util.get_opts("ch_image_metadata"):
         util.printD("Option not enabled or parameters missing. Skipping resource metadata...")
+        return
+
+    if not _preserve_infotext:
+        util.printD("Preserve Original Infotext is disabled. Skipping postprocessing metadata...")
         return
 
     # Only for postprocessing saves (no processing object, postprocessing key present)
