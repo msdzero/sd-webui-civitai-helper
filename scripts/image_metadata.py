@@ -367,3 +367,105 @@ def add_postprocessing_metadata(params):
 script_callbacks.on_before_image_saved(add_resource_metadata)
 script_callbacks.on_before_image_saved(add_postprocessing_metadata)
 # script_callbacks.on_image_saved(verify_postprocessing_saved)
+
+
+# ---------------------------------------------------------------------------
+# Auto-detect resources from pasted infotext (e.g. "Send to img2img")
+# ---------------------------------------------------------------------------
+
+# Track modelVersionIds that were added automatically so we can replace them
+# when the next image is sent, while keeping manually-added resources intact.
+_last_auto_resource_ids: set = set()
+
+
+def _load_civitai_info(base_path) -> dict | None:
+    """Return parsed .civitai.info for *base_path* (any extension), or None."""
+    try:
+        info_path = Path(base_path).with_suffix(".civitai.info")
+        if not info_path.is_file():
+            return None
+        with open(info_path, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        util.printD(f"civitai.info read error for {base_path}: {e}")
+        return None
+
+
+def on_infotext_pasted(infotext: str, params: dict):
+    """Auto-populate the extra resources list from the checkpoint and LoRAs
+    referenced in pasted infotext (fired when an image is sent to any tab)."""
+
+    if not util.get_opts("ch_image_metadata"):
+        return
+
+    global _last_auto_resource_ids
+
+    # Remove previously auto-detected resources, keep manually-added ones.
+    if _last_auto_resource_ids:
+        kept = [r for r in extra_resources.get()
+                if r.get("modelVersionId") not in _last_auto_resource_ids]
+        extra_resources.clear()
+        for r in kept:
+            extra_resources.add(r)
+    _last_auto_resource_ids = set()
+
+    detected = []
+
+    # 1. Checkpoint -----------------------------------------------------------
+    model_name = params.get("Model")
+    if model_name:
+        util.printD(f"model name in params: '{model_name}'")
+        checkpoint_info = sd_models.get_closet_checkpoint_match(model_name)
+        if checkpoint_info:
+            civitai_info = _load_civitai_info(checkpoint_info.filename)
+            if civitai_info:
+                detected.append({
+                    "type": civitai_info["model"]["type"].lower(),
+                    "modelVersionId": civitai_info["id"],
+                    "modelName": civitai_info["model"]["name"],
+                    "modelVersionName": civitai_info["name"],
+                })
+    else:
+        util.printD("No model name found in params.")
+
+    # 2. LoRAs in the positive prompt -----------------------------------------
+    prompt = params.get("Prompt", "")
+    for m in re.finditer(r'<lora:([^:>]+)(?::([^>]+))?>', prompt):
+        lora_name = m.group(1)
+        try:
+            weight = float(m.group(2)) if m.group(2) else 1.0
+        except ValueError:
+            weight = 1.0
+
+        network_on_disk = (networks.available_network_aliases.get(lora_name)
+                           or networks.available_network_aliases.get(lora_name.lower()))
+        if not network_on_disk:
+            continue
+        civitai_info = _load_civitai_info(network_on_disk.filename)
+        if not civitai_info:
+            continue
+        lora_type = civitai_info["model"]["type"].lower()
+        if lora_type in ("locon", "loha"):
+            lora_type = "lycoris"
+        detected.append({
+            "type": lora_type,
+            "weight": weight,
+            "modelVersionId": civitai_info["id"],
+            "modelName": civitai_info["model"]["name"],
+            "modelVersionName": civitai_info["name"],
+        })
+
+    if not detected:
+        return
+
+    existing_ids = {r.get("modelVersionId") for r in extra_resources.get()}
+    for resource in detected:
+        ver_id = resource.get("modelVersionId")
+        _last_auto_resource_ids.add(ver_id)
+        if ver_id not in existing_ids:
+            extra_resources.add(resource)
+            existing_ids.add(ver_id)
+            util.printD(f"Auto-added resource: {resource['modelName']} ({resource['type']})")
+
+
+script_callbacks.on_infotext_pasted(on_infotext_pasted)

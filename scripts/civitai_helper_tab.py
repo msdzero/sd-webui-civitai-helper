@@ -143,6 +143,10 @@ class Script(scripts.Script):
             )
 
             with gr.Row():
+                refresh_btn = gr.Button(
+                    value="Refresh List",
+                    elem_id=f"ch_extra_refresh_{tab_id}",
+                )
                 clear_btn = gr.Button(
                     value="Clear List",
                     variant="stop",
@@ -232,6 +236,11 @@ class Script(scripts.Script):
             on_set_weight,
             inputs=[weight_data_txtbox],
             outputs=[],
+        )
+
+        refresh_btn.click(
+            fn=lambda: _resources_html(tab_id),
+            outputs=[list_html],
         )
 
         clear_btn.click(
