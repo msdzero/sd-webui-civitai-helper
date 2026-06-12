@@ -1007,6 +1007,27 @@ onUiLoaded(() => {
         }, 50);
     });
 
+    // Picker add buttons inside "Browse & Add Local Models" accordion
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest ? e.target.closest('.ch-picker-add') : null;
+        if (!btn || btn.disabled) { return; }
+        e.preventDefault();
+        e.stopPropagation();
+        var type  = btn.getAttribute('data-type');
+        var key   = btn.getAttribute('data-key');
+        var tabId = btn.getAttribute('data-tab');
+        var root  = gradioApp();
+        var txtbox = root.querySelector('#ch_picker_add_key_' + tabId + ' textarea');
+        if (txtbox) {
+            txtbox.value = JSON.stringify({type: type, key: key});
+            txtbox.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        setTimeout(function() {
+            var hiddenBtn = root.querySelector('#ch_picker_add_btn_' + tabId);
+            if (hiddenBtn) { hiddenBtn.click(); }
+        }, 50);
+    });
+
     document.querySelectorAll('.ch_setting_link').forEach(el => {
         el.addEventListener('click', function(e) {
             e.preventDefault();
